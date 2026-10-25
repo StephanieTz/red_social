@@ -1,5 +1,4 @@
-const ORIGIN = location.protocol.startsWith("http") && location.port === "4000" ? location.origin : "http://localhost:4000";
-const API = ORIGIN + "/api";
+   const ORIGIN = location.protocol.startsWith("http") && (location.port === "4000" || location.hostname !== "localhost") ? location.origin : "http://localhost:4000";const API = ORIGIN + "/api";
 
 // El token vive en una cookie httpOnly (el navegador la gestiona; JavaScript no puede leerla).
 // Aquí solo guardamos datos públicos del usuario para pintar la interfaz.
