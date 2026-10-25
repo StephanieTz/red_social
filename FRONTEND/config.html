@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#03213D">
+<title>Configuración · Mi Red Social</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div>
+  <b>Mi Red <span>Social</span></b>
+  <span></span>
+  <nav class="navr"><a class="btn ghost" href="feed.html">← Volver al feed</a></nav>
+</div></header>
+<div class="wrap">
+  <h1>Configuración</h1>
+  <nav class="nav" role="tablist" id="tabs">
+    <button role="tab" data-tab="perfil">Perfil</button>
+    <button role="tab" data-tab="guardado">Guardado</button>
+    <button role="tab" data-tab="actividad">Actividad</button>
+    <button role="tab" data-tab="seguridad">Seguridad</button>
+  </nav>
+  <div id="view"></div>
+</div>
+<input id="avatarFile" type="file" accept="image/png,image/jpeg" hidden>
+<script src="common.js"></script>
+<script src="posts.js"></script>
+<script src="config.js"></script>
+</body>
+</html>

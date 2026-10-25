@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#03213D">
+<title>Mi Red Social · Entrar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>@media(max-width:800px){.auth{grid-template-columns:1fr}.brand{min-height:170px}.brand h2{font-size:26px}.leaf{width:170px;height:170px}}</style>
+</head>
+<body>
+<main class="auth">
+  <section class="brand" aria-hidden="false">
+    <span class="leaf" style="--c:#621D43;--r:20deg;right:-60px;top:12%"></span>
+    <span class="leaf" style="--c:#374365;--r:110deg;right:90px;bottom:-90px"></span>
+    <span class="leaf" style="--c:#E6223A;--r:-20deg;right:-20px;bottom:30%;opacity:.35"></span>
+    <span class="logo">Mi Red Social</span>
+    <h2>Comparte lo que piensas.</h2>
+  </section>
+  <section class="panel">
+    <div class="card">
+      <div class="tabs" role="tablist" data-t="0"><i></i>
+        <button role="tab" id="tLogin" aria-selected="true">Iniciar sesión</button>
+        <button role="tab" id="tReg" aria-selected="false">Crear cuenta</button>
+      </div>
+      <form id="loginForm">
+        <h1>Bienvenido de nuevo</h1><p class="sub">Entra para ver tu feed.</p>
+        <label>Correo electrónico<input id="loginEmail" type="email" autocomplete="email" autocapitalize="none" required></label>
+        <label>Contraseña<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+        <p class="err-msg" role="alert"></p>
+        <button class="btn" type="submit">Entrar</button>
+      </form>
+      <form id="registerForm" hidden>
+        <h1>Crea tu cuenta</h1><p class="sub">Solo toma un minuto.</p>
+        <label>Nombre<input id="regName" autocomplete="name" required></label>
+        <label>Nick de usuario<input id="regNick" maxlength="20" pattern="[A-Za-z0-9_.]{3,20}" title="3 a 20 caracteres: letras, números, _ o ." autocomplete="username" autocapitalize="none" autocorrect="off" required></label>
+        <label>Correo electrónico<input id="regEmail" type="email" autocomplete="email" autocapitalize="none" required></label>
+        <label>Contraseña (mínimo 8 caracteres)<input id="regPassword" type="password" autocomplete="new-password" minlength="8" maxlength="72" required></label>
+        <p class="err-msg" role="alert"></p>
+        <button class="btn" type="submit">Crear cuenta</button>
+      </form>
+    </div>
+  </section>
+</main>
+<script src="common.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

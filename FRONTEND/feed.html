@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#03213D">
+<title>Feed · Mi Red Social</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div>
+  <b>Mi Red <span>Social</span></b>
+  <div class="search"><input id="q" type="search" placeholder="Buscar personas" autocomplete="off" autocapitalize="none" aria-label="Buscar usuarios"><div id="results" class="results" hidden></div></div>
+  <nav class="navr"><a class="btn ghost" href="config.html">Configuración</a><button class="btn ghost" id="logout">Cerrar sesión</button></nav>
+</div></header>
+<div class="shell">
+  <aside class="box me" id="me"></aside>
+  <main>
+    <section class="box compose">
+      <div class="row"><span id="meMini"></span><textarea id="text" maxlength="500" placeholder="¿Qué estás pensando?" aria-label="Nueva publicación"></textarea></div>
+      <div class="preview" id="preview" hidden><img alt="Vista previa" hidden><video controls playsinline hidden></video><button type="button" id="rmImg">Quitar</button></div>
+      <div class="bar">
+        <label class="btn ghost attach">Foto o video<input id="file" type="file" accept="image/png,image/jpeg,video/mp4,video/webm" hidden></label>
+        <button class="btn" id="publish" disabled>Publicar</button>
+      </div>
+    </section>
+    <div id="feed"></div>
+    <div style="text-align:center;margin-top:16px"><button class="btn ghost" id="more" hidden>Ver más</button></div>
+  </main>
+  <aside class="box rail" id="rail" style="align-self:start"><h4>A quién seguir</h4><div id="sug"></div></aside>
+</div>
+<input id="avatarFile" type="file" accept="image/png,image/jpeg" hidden>
+<script src="common.js"></script>
+<script src="posts.js"></script>
+<script src="feed.js"></script>
+</body>
+</html>

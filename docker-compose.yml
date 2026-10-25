@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: red_social_db
+    restart: always
+    ports:
+      - "127.0.0.1:27017:27017"   # solo accesible desde tu PC, no desde la red
+    volumes:
+      - mongo_data:/data/db
+
+  app:
+    build: .
+    container_name: red_social_app
+    restart: always
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - JWT_SECRET=${JWT_SECRET}   # se lee de tu archivo .env (ya no está escrito aquí)
+      - MONGO_URI=mongodb://mongodb:27017/mi_blog_app
+    depends_on:
+      - mongodb
+    volumes:
+      - ./uploads:/app/uploads
+
+volumes:
+  mongo_data:

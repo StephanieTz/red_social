@@ -1,0 +1,98 @@
+PASOS PARA CREAR UNA RED SOCIAL:
+===================================================================================================
+
+BACKEND
+MongoDB Compass
+Mongo
+API 
+JASON JWT
+Express
+Virtual Privacy Claude - incorporación de sistema en la nube
+Comunicación - medio de relación
+HTTP
+FRONTEND
+Creatividad atractiva y dinámica
+
+===================================================================================================
+Crear una carpeta llamada sitio_red_social
+Tener la BD de mongo y diseñar la BD
+inicializar proyecto de Node: npm init
+instalar dependencias
+Conexiones a la BD
+configurar el servidor de Node
+Crear controladores de prueba
+Configurar rutas
+probar rutas
+Crear el modelo de usuarios
+Acción y ruta de registro de usuarios
+Login ruta acción, cifrar contraseñas generación de token JWT
+Crear el middleware de autenticación y proteger rutas
+Crear el perfil de usuario, listado y actualización de datos
+Implementación de subida y visualización de imagen - video
+Crear el sistema  de seguidores: seguir, dejar de seguir y consultar seguidores
+crear el modelo y las funciones de publicación
+crear, mostrar, eliminar y listar publicaciones
+Implementar imágenes de publicación y deed principal
+Ajustar las respuestas API, ocultar datos sensibles y validar toda la información en el backend
+
+
+============================================================================================================
+Pasos para una Red Social:
+1. Diseñar la base de datos
+2. Inicializando proyecto con Node
+3. Instalando dependencias
+4. Script para ahorrar tiempo
+5. Conexión a mongo
+6. Configurando el servidor de Node
+7. Creando controladores de prueba
+8. Configurando rutas
+9. Configurando rutas
+10. Modelo de usuarios
+11. Acción y ruta de registros de usuarios
+12. Login ruta acción
+13. Comprobar si existe el usuario
+14. Comprobar si la contraseña es correcta
+15. Generar token jwt
+16. Middleware de auth
+17. Solución error md auth
+18. Datos del perfil
+19. Pagina listado usuarios
+20. Actualizar usuarios
+21. Actualizar usuarios await
+22. Subida de archivos
+23. Endpoint mostrar imagen
+24. Modelo y controlador de follows
+25. Acción save follow y corrección de error subida
+26. Seguir a un usuario
+27. Dejar de seguir
+28. Array de ids de usuarios que sigo y me siguen
+29. Datos de seguimiento para el perfil
+30. Info de follows en el listado de usuarios
+31. Acción de mis seguidores
+32. Modelo de publicaciones
+33. Guardar publicaciones
+34. Mostrar una publicación
+35. Borrar una publicación
+36. Listado publicaiones de perfil usuario
+37. Subir imagen de publicaciones
+38. Devolver una imagen de publicación
+39. Devolver una imagen de publicación
+40. Feed de publicaciones
+41. Quitando email de select
+42. Modificaciones al api
+43. Validar en el backend
+
+
+
+Red social:
+	npm install express //Servidor Backend
+	npm install mongoose //base de datos
+	npm install mongoose-pagination //Otros metodos de mongoose DB
+	npm install multer //imagenes
+	npm install moment //procesar fechas
+	npm install valitator //validar campos
+	npm install bcrypt-node.js //cifrar contraseñas hashear
+	npm install jwt-simple //Crear tokens se utilizan para mantener segura la información en las aplicaciones web.
+	npm install cors //administrar dominios o rutas 
+	npm instlal nodemon --save-dev //para que nuestra app se este refrescando o renderizando. 
+
