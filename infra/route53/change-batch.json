@@ -1,0 +1,7 @@
+{
+  "Comment": "Apunta el dominio a la IP elástica de la EC2",
+  "Changes": [{
+    "Action": "UPSERT",
+    "ResourceRecordSet": { "Name": "TU-DOMINIO.", "Type": "A", "TTL": 300, "ResourceRecords": [{ "Value": "IP-ELASTICA-DE-LA-EC2" }] }
+  }]
+}

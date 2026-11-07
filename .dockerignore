@@ -1,5 +1,12 @@
 node_modules
-npm-debug.log
+FRONTEND/node_modules
+FRONTEND/dist
 .env
+.env.*
 .git
-.gitignore
+storage
+uploads
+privado
+docs
+tests
+*.md

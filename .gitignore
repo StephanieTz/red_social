@@ -1,6 +1,20 @@
+# Secretos (NUNCA subir)
 .env
-uploads/
+.env.*
+!.env.example
+privado/*
+!privado/LEEME.md
+*.pem
+
+# Dependencias y archivos generados
 node_modules/
+FRONTEND/dist/
+storage/
+uploads/
+
+# Sistema / herramientas
+.DS_Store
+Thumbs.db
 .agents/
 .claude/
 skills-lock.json

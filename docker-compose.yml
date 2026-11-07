@@ -1,29 +1,32 @@
-version: '3.8'
-
+# Producción / EC2:   docker compose up -d --build
+# Con BD local:       docker compose --profile localdb up -d --build
+#                     (y en .env: DATABASE_URL=DIRECT_URL=postgresql://red:red@db:5432/red_social)
 services:
-  mongodb:
-    image: mongo:latest
-    container_name: red_social_db
-    restart: always
-    ports:
-      - "127.0.0.1:27017:27017"   # solo accesible desde tu PC, no desde la red
-    volumes:
-      - mongo_data:/data/db
-
   app:
     build: .
     container_name: red_social_app
-    restart: always
-    ports:
-      - "4000:4000"
+    restart: unless-stopped
+    env_file: .env
     environment:
       - PORT=4000
-      - JWT_SECRET=${JWT_SECRET}   # se lee de tu archivo .env (ya no está escrito aquí)
-      - MONGO_URI=mongodb://mongodb:27017/mi_blog_app
-    depends_on:
-      - mongodb
+    ports:
+      - "4000:4000"          # con nginx delante, cámbialo a "127.0.0.1:4000:4000"
     volumes:
-      - ./uploads:/app/uploads
+      - ./storage:/app/storage   # solo se usa si STORAGE_DRIVER=local
+
+  db:
+    image: postgres:16-alpine
+    profiles: ["localdb"]
+    container_name: red_social_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: red
+      POSTGRES_PASSWORD: red
+      POSTGRES_DB: red_social
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
 
 volumes:
-  mongo_data:
+  pg_data:

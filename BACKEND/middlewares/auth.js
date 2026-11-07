@@ -1,12 +1,11 @@
 const { verifyToken } = require("../services/jwt");
 
 const readCookie = (req, name) => {
-  const m = (req.headers.cookie || "").split(";").map(c => c.trim()).find(c => c.startsWith(name + "="));
+  const m = (req.headers.cookie || "").split(";").map((c) => c.trim()).find((c) => c.startsWith(name + "="));
   return m ? decodeURIComponent(m.slice(name.length + 1)) : null;
 };
 
-// El token se lee de la cookie httpOnly (navegador). El header Authorization sigue
-// aceptándose para clientes de API como Postman.
+// El token viaja en una cookie httpOnly (navegador). El header Authorization se acepta para Postman/curl.
 const ensureAuth = (req, res, next) => {
   let token = readCookie(req, "token");
   if (!token && req.headers.authorization) token = req.headers.authorization.replace(/['"]+/g, "").replace(/^Bearer\s+/i, "").trim();
@@ -15,4 +14,7 @@ const ensureAuth = (req, res, next) => {
   catch { return res.status(401).json({ status: "error", message: "La sesión no es válida o ha expirado" }); }
 };
 
-module.exports = { ensureAuth, readCookie };
+const ensureAdmin = (req, res, next) =>
+  req.user?.role === "admin" ? next() : res.status(403).json({ status: "error", message: "Solo administradores" });
+
+module.exports = { ensureAuth, ensureAdmin, readCookie };
