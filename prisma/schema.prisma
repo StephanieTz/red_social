@@ -1,0 +1,270 @@
+// ============================================================
+// Proyecto Final - Red Social tipo Instagram
+// Base de datos: PostgreSQL (Neon)
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")       // Neon pooled
+  directUrl = env("DIRECT_URL")         // Neon directo (migraciones)
+}
+
+// ============================================================
+// USERS
+// ============================================================
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  name          String    @db.VarChar(50)
+  nick          String    @unique @db.VarChar(20)
+  email         String    @unique @db.VarChar(255)
+  passwordHash  String?   @map("password_hash") @db.VarChar(255)
+  salt          String?   @db.VarChar(64)
+  imageKey      String?   @map("image_key") @db.VarChar(500)
+  bio           String    @default("") @db.VarChar(160)
+  googleId      String?   @unique @map("google_id") @db.VarChar(255)
+  role          String    @default("user") @db.VarChar(20)
+  emailVerified Boolean   @default(false) @map("email_verified")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  publications        Publication[]
+  comments            Comment[]
+  reactions           Reaction[]
+  reposts             Repost[]
+  saves               Save[]
+  followers           Follow[]        @relation("FollowedUser")
+  following           Follow[]        @relation("FollowerUser")
+  auditLogs           AuditLog[]
+  passwordResets      PasswordReset[]
+
+  @@index([nick])
+  @@index([email])
+  @@map("users")
+}
+
+// ============================================================
+// FOLLOWS
+// ============================================================
+model Follow {
+  id           String   @id @default(uuid()) @db.Uuid
+  followerId   String   @map("follower_id") @db.Uuid
+  followedId   String   @map("followed_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  follower User @relation("FollowerUser", fields: [followerId], references: [id], onDelete: Cascade)
+  followed User @relation("FollowedUser", fields: [followedId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followedId])
+  @@index([followedId])
+  @@map("follows")
+}
+
+// ============================================================
+// PUBLICATIONS
+// ============================================================
+model Publication {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
+  text            String   @db.VarChar(500)
+  fileKey         String?  @map("file_key") @db.VarChar(500)
+  fileType        String?  @map("file_type") @db.VarChar(50)
+  thumbKey        String?  @map("thumb_key") @db.VarChar(500)
+  width           Int?
+  height          Int?
+  sizeBytes       Int?     @map("size_bytes")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transforms   PublicationTransform[]
+  analysis     ImageAnalysis?
+  comments     Comment[]
+  reactions    Reaction[]
+  reposts      Repost[]
+  saves        Save[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("publications")
+}
+
+// ============================================================
+// PUBLICATION TRANSFORMS
+// ============================================================
+enum TransformType {
+  THUMB
+  RESIZE
+  GRAYSCALE
+  SEPIA
+  UPSCALE
+  BLUR
+  ROTATE
+}
+
+model PublicationTransform {
+  id            String        @id @default(uuid()) @db.Uuid
+  publicationId String        @map("publication_id") @db.Uuid
+  type          TransformType
+  s3Key         String        @map("s3_key") @db.VarChar(500)
+  width         Int?
+  height        Int?
+  sizeBytes     Int?          @map("size_bytes")
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@unique([publicationId, type])
+  @@index([publicationId])
+  @@map("publication_transforms")
+}
+
+// ============================================================
+// IMAGE ANALYSIS (face-api, opencv, rekognition)
+// ============================================================
+enum AnalysisProvider {
+  FACEAPI
+  OPENCV
+  REKOGNITION
+}
+
+model ImageAnalysis {
+  id            String           @id @default(uuid()) @db.Uuid
+  publicationId String           @unique @map("publication_id") @db.Uuid
+  provider      AnalysisProvider
+  faces         Json?
+  faceCount     Int              @default(0) @map("face_count")
+  labels        Json?
+  moderation    Json?
+  rawResponse   Json?            @map("raw_response")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@map("image_analysis")
+}
+
+// ============================================================
+// COMMENTS
+// ============================================================
+model Comment {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  publicationId String   @map("publication_id") @db.Uuid
+  parentId      String?  @map("parent_id") @db.Uuid
+  replyToId     String?  @map("reply_to_id") @db.Uuid
+  text          String   @db.VarChar(300)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  parent      Comment?    @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Comment[]   @relation("CommentReplies")
+  reactions   Reaction[]  @relation("CommentReactions")
+
+  @@index([publicationId, createdAt])
+  @@index([parentId])
+  @@index([userId])
+  @@map("comments")
+}
+
+// ============================================================
+// REACTIONS
+// ============================================================
+enum ReactionKind {
+  POST
+  COMMENT
+}
+
+model Reaction {
+  id         String       @id @default(uuid()) @db.Uuid
+  userId     String       @map("user_id") @db.Uuid
+  kind       ReactionKind
+  targetId   String       @map("target_id") @db.Uuid
+  value      Int          @default(1)
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publication Publication? @relation(fields: [targetId], references: [id], onDelete: Cascade, map: "reaction_publication_fk")
+  comment    Comment?      @relation("CommentReactions", fields: [targetId], references: [id], onDelete: Cascade, map: "reaction_comment_fk")
+
+  @@unique([userId, kind, targetId])
+  @@index([targetId, kind])
+  @@map("reactions")
+}
+
+// ============================================================
+// REPOSTS
+// ============================================================
+model Repost {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  publicationId String   @map("publication_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, publicationId])
+  @@index([publicationId])
+  @@map("reposts")
+}
+
+// ============================================================
+// SAVES
+// ============================================================
+model Save {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  publicationId String   @map("publication_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, publicationId])
+  @@index([userId, createdAt])
+  @@map("saves")
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String   @db.VarChar(80)
+  entity     String?  @db.VarChar(50)
+  entityId   String?  @map("entity_id") @db.Uuid
+  ip         String?  @db.VarChar(45)
+  userAgent  String?  @map("user_agent") @db.VarChar(500)
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================================
+// PASSWORD RESETS
+// ============================================================
+model PasswordReset {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tokenHash String   @unique @map("token_hash") @db.VarChar(255)
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_resets")
+}

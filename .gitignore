@@ -1,10 +1,6 @@
-   # Variables de entorno (Nunca subir a GitHub)
-   .env
-   
-   # Carpetas pesadas o temporales
-   node_modules/
-   uploads/
-   
-   # Archivos de sistema
-   .DS_Store
-   Thumbs.db
+.env
+uploads/
+node_modules/
+.agents/
+.claude/
+skills-lock.json

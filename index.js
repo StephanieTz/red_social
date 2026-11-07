@@ -1,9 +1,12 @@
-require("dotenv").config();
+// Forzamos a que busque el .env en la misma carpeta donde está este index.js
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
+
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
 
-require("./BACKEND/services/jwt"); // valida JWT_SECRET antes de arrancar
+// Al poner esto DESPUÉS de dotenv, el archivo jwt.js ya tendrá la contraseña
+require("./BACKEND/services/jwt"); 
 const connection = require("./BACKEND/database/connection");
 const { headers, apiLimiter, sameOrigin, allowed } = require("./BACKEND/middlewares/security");
 const UserRoutes = require("./BACKEND/routes/user");
@@ -33,7 +36,6 @@ app.use("/api", (req, res) => res.status(404).json({ status: "error", message: "
 
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "FRONTEND", "index.html")));
 
-// Errores en JSON (multer: archivo muy grande o tipo no permitido, JSON mal formado, etc.)
 app.use((err, req, res, next) => {
   const code = err.name === "MulterError" ? 400 : err.status || 500;
   const message = err.code === "LIMIT_FILE_SIZE" ? "El archivo es demasiado grande" : code < 500 ? err.message : "Error interno";

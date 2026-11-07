@@ -1,16 +1,14 @@
-const mongoose = require("mongoose");
+// BACKEND/database/connection.js
+const prisma = require("./prisma");
 
 const connection = async () => {
   try {
-    // Si estamos en Docker, usará process.env.MONGO_URI. 
-    // Si estás en tu PC normal, usará el localhost de respaldo.
-    const uri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/mi_blog_app";
-    
-    await mongoose.connect(uri);
-    console.log("✅ Conectado a MongoDB correctamente");
+    // Prisma se conecta de forma perezosa, pero forzamos una consulta simple para verificar
+    await prisma.$connect();
+    console.log("✅ Conectado a PostgreSQL (Neon) correctamente con Prisma");
   } catch (error) {
-    console.error("✗ Error al conectar a MongoDB:", error.message);
-    process.exit(1); // Detiene la aplicación si no hay base de datos
+    console.error("❌ Error al conectar a PostgreSQL:", error.message);
+    process.exit(1);
   }
 };
 
