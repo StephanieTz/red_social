@@ -40,4 +40,14 @@ const profile = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { feed, profile };
+// GET /api/publications/:id — una publicación (para abrirla desde el perfil)
+const getOne = async (req, res, next) => {
+  try {
+    if (!validator.isUUID(req.params.id)) return res.status(400).json({ status: "error", message: "ID inválido" });
+    const p = await prisma.publication.findUnique({ where: { id: req.params.id }, include: { user: AUTHOR } });
+    if (!p) return res.status(404).json({ status: "error", message: "Publicación no encontrada" });
+    res.json({ status: "success", publication: pubOut(p) });
+  } catch (e) { next(e); }
+};
+
+module.exports = { feed, profile, getOne };

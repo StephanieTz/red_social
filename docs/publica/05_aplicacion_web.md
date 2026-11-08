@@ -6,9 +6,10 @@
 | Bienvenida / autenticación | `AuthPage.jsx` | Pestañas *Iniciar sesión* / *Crear cuenta*, reCAPTCHA y botón de Google |
 | Inicio | `FeedPage.jsx` | Perfil (izq.), publicaciones o **galería de miniaturas** (centro) y «A quién seguir» (der.) |
 | Publicación | `PostCard.jsx` | Me gusta, no me gusta, comentarios con respuestas, repost, guardar; clic en la foto abre el detalle |
-| Crear publicación | `Composer.jsx` | Texto y, opcionalmente, foto con detección de rostros (recuadros verdes) |
+| Crear publicación | `Composer.jsx` | Texto y, opcionalmente, una foto (con detección de rostros) o un **video corto** (el navegador toma la portada) |
+| Perfil | `ProfilePage.jsx` | Banner, foto, bio, contadores y pestañas: Publicaciones, Videos, Reposts y Etiquetadas (`#/u/<nick>`) |
 | Foto completa | `PhotoModal.jsx` | Original + 3 transformaciones, descarga, análisis, eliminar (dueño/admin) |
-| Configuración | `SettingsPage.jsx` | Menú lateral: editar perfil, guardado, actividad (me gusta, comentarios, reposts, publicaciones) y contraseña |
+| Configuración | `SettingsPage.jsx` | Menú lateral: editar perfil (foto, **banner**, biografía), guardado, actividad (me gusta, comentarios, reposts, publicaciones) y contraseña |
 
 ## API (todas bajo `/api`, salvo `/media`)
 | Método y ruta | Auth | Función |
@@ -19,11 +20,14 @@
 | `POST /user/logout` · `GET /user/me` | sesión | Cerrar / consultar sesión |
 | `PUT /user/update` · `PUT /user/password` · `POST /user/upload` | sesión | Perfil, contraseña, avatar |
 | `GET /publications/feed/:page` | sesión | Inicio: publicaciones y reposts mezclados por fecha |
-| `GET /photos?page&limit&mine` | sesión | Miniaturas paginadas |
+| `GET /profile/:nick` · `GET /profile/:nick/:tab` | sesión | Perfil y cuadrícula (`posts`, `videos`, `reposts`, `tagged`) |
+| `GET /publications/:id` | sesión | Una publicación |
+| `POST /user/banner` · `DELETE /user/banner` | sesión | Banner del perfil (1500×500) |
+| `GET /photos?page&limit&mine&kind=image\|video` | sesión | Miniaturas paginadas |
 | `GET /photos/:id` | sesión | Original + transformaciones + análisis |
-| `POST /photos` | sesión | Publicar (multipart: `text`, `file` opcional, `faces`) |
+| `POST /photos` | sesión | Publicar (multipart: `text`, `file` foto o video, `poster` portada del video, `faces`) |
 | `DELETE /photos/:id` | dueño/admin | Borrar foto y archivos |
-| `GET /media/<clave>` | sesión | Entrega la imagen (caché inmutable) |
+| `GET /media/<clave>` | sesión | Entrega imágenes y videos (caché inmutable, soporta `Range` para reproducir videos) |
 | `GET /audit` | admin | Bitácora |
 | `POST /social/react` · `/social/save` · `/social/repost` | sesión | Me gusta/no me gusta, guardar, repostear |
 | `GET/POST/DELETE /social/comment…` · `POST /social/comment-like` | sesión | Comentarios, respuestas y me gusta en comentarios |

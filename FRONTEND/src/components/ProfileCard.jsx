@@ -17,11 +17,11 @@ export default function ProfileCard({ user, setUser, counts }) {
 
   return (
     <aside className="box me">
-      <div className="cover" />
+      <div className="cover" style={user.bannerUrl ? { backgroundImage: `url(${user.bannerUrl})` } : undefined} />
       <div className="in">
         <button className="pick" onClick={() => file.current.click()} aria-label="Cambiar foto de perfil"><Avatar user={user} size={68} /></button>
         <input ref={file} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={change} />
-        <h3>{user.name}</h3>
+        <h3><a href={`#/u/${user.nick}`}>{user.name}</a></h3>
         <p>@{user.nick}</p>
         {user.bio && <p className="bio">{user.bio}</p>}
         <div className="stats">
@@ -29,6 +29,7 @@ export default function ProfileCard({ user, setUser, counts }) {
           <div><b>{counts.followers}</b><span>Seguidores</span></div>
           <div><b>{counts.following}</b><span>Siguiendo</span></div>
         </div>
+        <a className="link" href={`#/u/${user.nick}`}>Ver mi perfil →</a>
         <a className="link" href="#/config/perfil">Configuración y actividad →</a>
       </div>
     </aside>

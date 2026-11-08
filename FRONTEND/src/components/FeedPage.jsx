@@ -74,7 +74,7 @@ export default function FeedPage({ user, setUser, onLogout }) {
 
   return (
     <>
-      <Topbar onLogout={onLogout} search={<SearchBox following={following} onToggle={toggleFollow} />} />
+      <Topbar onLogout={onLogout} me={user} search={<SearchBox following={following} onToggle={toggleFollow} />} />
       <div className="shell">
         <ProfileCard user={user} setUser={setUser} counts={{ pubs, followers, following: following.size }} />
 

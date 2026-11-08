@@ -14,7 +14,7 @@ Node.js 22+ · npm 10+ · PostgreSQL (o cuenta Neon) · Docker (despliegue) · A
 | `GOOGLE_CLIENT_ID` | opcional | Habilita el botón de Google |
 | `REKOGNITION_ENABLED` | opcional | Análisis con Rekognition |
 | `HTTPS`, `TRUST_PROXY` | según despliegue | Cookie `secure` y proxy |
-| `MAX_UPLOAD_MB` | opcional | Límite de subida (10) |
+| `MAX_UPLOAD_MB`, `MAX_VIDEO_MB` | opcional | Límite de fotos (10) y de videos cortos (50) |
 
 ## Comandos
 | Comando | Acción |
@@ -25,8 +25,9 @@ Node.js 22+ · npm 10+ · PostgreSQL (o cuenta Neon) · Docker (despliegue) · A
 | `npm run build:front` | Compila React en `FRONTEND/dist` |
 | `npm start` / `npm run dev` | Servidor / servidor con recarga |
 | `npm run dev:front` | React con recarga en :5173 (proxy a :4000) |
-| `npm test` | 25 pruebas automáticas |
+| `npm test` | 31 pruebas automáticas |
 | `node scripts/make-admin.js <correo>` | Convierte un usuario en administrador |
+| `npm run db:reset` / `node scripts/reset-db.js --yes` | Vacía la base de datos y `./storage` (empezar de cero) |
 
 ## Estructura del backend
 `routes/` (URL → controlador, con middlewares) → `controllers/` (valida y responde) → `services/` (lógica reutilizable: imágenes, almacenamiento, contraseñas, auditoría, Google, reCAPTCHA, análisis). `config/env.js` es el único lugar que lee `process.env`.

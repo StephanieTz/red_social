@@ -32,7 +32,8 @@ const config = {
   recaptcha: { siteKey: e.RECAPTCHA_SITE_KEY || "", secret: e.RECAPTCHA_SECRET || "" },
   google: { clientId: e.GOOGLE_CLIENT_ID || "" },
   rekognition: bool(e.REKOGNITION_ENABLED),
-  maxUploadMb: Number(e.MAX_UPLOAD_MB) || 10,
+  maxUploadMb: Number(e.MAX_UPLOAD_MB) || 10,   // fotos
+  maxVideoMb: Number(e.MAX_VIDEO_MB) || 50,     // videos cortos
 };
 
 module.exports = config;

@@ -8,7 +8,7 @@ const upload = require("../middlewares/upload");
 router.use(ensureAuth);
 router.get("/", P.list);
 router.get("/:id", P.get);
-router.post("/", uploadLimiter, upload.photo.single("file"), P.create);
+router.post("/", uploadLimiter, upload.media, P.create);
 router.delete("/:id", P.remove);
 
 module.exports = router;

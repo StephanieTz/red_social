@@ -12,7 +12,7 @@ Un fallo al auditar nunca interrumpe la petición del usuario, y **nunca** se gu
 | `user.register`, `user.register_google` | Alta de cuenta |
 | `user.login`, `user.login_google` | Inicio de sesión correcto |
 | `user.login_failed` | Contraseña incorrecta (guarda el correo intentado en `metadata`) |
-| `user.update`, `user.avatar`, `user.password_change` | Cambios de perfil |
+| `user.update`, `user.avatar`, `user.banner`, `user.password_change` | Cambios de perfil |
 | `post.create` | Publicación de solo texto |
 | `photo.upload` | Subida (bytes y rostros detectados en `metadata`) |
 | `photo.rejected` | Rechazo por contenido inapropiado (Rekognition) |

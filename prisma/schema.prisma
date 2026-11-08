@@ -24,6 +24,7 @@ model User {
   passwordHash  String?   @map("password_hash") @db.VarChar(255)
   salt          String?   @db.VarChar(64)
   imageKey      String?   @map("image_key") @db.VarChar(500)
+  bannerKey     String?   @map("banner_key") @db.VarChar(500)
   bio           String    @default("") @db.VarChar(160)
   googleId      String?   @unique @map("google_id") @db.VarChar(255)
   role          String    @default("user") @db.VarChar(20)

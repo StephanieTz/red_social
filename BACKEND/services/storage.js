@@ -5,7 +5,8 @@
  *   - s3     → Amazon S3 (producción). Usa el IAM Role de la EC2; no hacen falta claves en el servidor.
  *   - local  → carpeta ./storage (desarrollo sin AWS).
  *
- * Interfaz:  put(key, buffer, contentType) · get(key) → {stream,contentType,contentLength,etag} · remove(keys[])
+ * Interfaz:  put(key, buffer, contentType) · get(key, range?) → {stream,contentType,contentLength,etag,totalLength,range?} · remove(keys[])
+ * `range` = {start,end} (bytes): lo necesitan los navegadores para reproducir y adelantar videos.
  * Si un objeto no existe, get() lanza un error con code "ENOENT".
  */
 const fs = require("fs/promises");
@@ -13,7 +14,7 @@ const fsSync = require("fs");
 const path = require("path");
 const cfg = require("../config/env");
 
-const MIME = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+const MIME = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", mp4: "video/mp4", webm: "video/webm" };
 const mimeFromKey = (key) => MIME[String(key).split(".").pop().toLowerCase()] || "application/octet-stream";
 
 function createLocalDriver(dir) {
@@ -30,10 +31,16 @@ function createLocalDriver(dir) {
       await fs.mkdir(path.dirname(p), { recursive: true });
       await fs.writeFile(p, buffer);
     },
-    async get(key) {
+    async get(key, range) {
       const p = full(key);
       const st = await fs.stat(p); // lanza ENOENT si no existe
-      return { stream: fsSync.createReadStream(p), contentLength: st.size, contentType: mimeFromKey(key), etag: `"${st.size}-${Math.round(st.mtimeMs)}"` };
+      const base = { contentType: mimeFromKey(key), etag: `"${st.size}-${Math.round(st.mtimeMs)}"`, totalLength: st.size };
+      if (range) {
+        const start = range.start, end = Math.min(range.end ?? st.size - 1, st.size - 1);
+        if (start >= st.size || start > end) throw Object.assign(new Error("Rango inválido"), { code: "RANGE" });
+        return { ...base, stream: fsSync.createReadStream(p, { start, end }), contentLength: end - start + 1, range: { start, end } };
+      }
+      return { ...base, stream: fsSync.createReadStream(p), contentLength: st.size };
     },
     async remove(keys) {
       await Promise.all(keys.filter(Boolean).map(async (k) => {
@@ -61,12 +68,16 @@ function createS3Driver({ bucket, region }) {
         ServerSideEncryption: "AES256",
       }));
     },
-    async get(key) {
+    async get(key, range) {
       try {
-        const r = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
-        return { stream: r.Body, contentLength: r.ContentLength, contentType: r.ContentType || mimeFromKey(key), etag: r.ETag };
+        const r = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key, ...(range ? { Range: `bytes=${range.start}-${range.end ?? ""}` } : {}) }));
+        const base = { stream: r.Body, contentLength: r.ContentLength, contentType: r.ContentType || mimeFromKey(key), etag: r.ETag, totalLength: r.ContentLength };
+        if (!range) return base;
+        const m = /bytes (\d+)-(\d+)\/(\d+)/.exec(r.ContentRange || "");
+        return { ...base, totalLength: m ? Number(m[3]) : undefined, range: m ? { start: Number(m[1]), end: Number(m[2]) } : range };
       } catch (e) {
         if (e.name === "NoSuchKey" || e.$metadata?.httpStatusCode === 404) throw Object.assign(new Error("No existe"), { code: "ENOENT" });
+        if (e.name === "InvalidRange" || e.$metadata?.httpStatusCode === 416) throw Object.assign(new Error("Rango inválido"), { code: "RANGE" });
         throw e;
       }
     },

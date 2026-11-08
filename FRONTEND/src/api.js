@@ -24,3 +24,14 @@ export async function uploadAvatar(file) {
   form.append("file0", file);
   return (await api("/user/upload", { method: "POST", form })).user;
 }
+
+/** Banner del perfil (máx. 5 MB). Devuelve el usuario actualizado. */
+export async function uploadBanner(file) {
+  if (file.size > 5 * 1024 * 1024) throw new Error("El banner debe pesar menos de 5 MB");
+  const form = new FormData();
+  form.append("file0", file);
+  return (await api("/user/banner", { method: "POST", form })).user;
+}
+export async function removeBanner() {
+  return (await api("/user/banner", { method: "DELETE" })).user;
+}

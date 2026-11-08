@@ -27,6 +27,7 @@ erDiagram
     string salt "única por usuario"
     string google_id UK
     string image_key "clave S3 del avatar"
+    string banner_key "clave S3 del banner"
     string role }
   publications { uuid id PK
     uuid user_id FK
@@ -79,12 +80,15 @@ photos/{userId}/{photoId}/original.{jpg|png|webp}
 photos/{userId}/{photoId}/thumb.jpg
 photos/{userId}/{photoId}/grayscale.jpg
 photos/{userId}/{photoId}/sepia.jpg
+photos/{userId}/{photoId}/feed.jpg
 photos/{userId}/{photoId}/upscale.jpg
 avatars/{userId}/{timestamp}.jpg
+banners/{userId}/{timestamp}.jpg
+(en un video: original.mp4|webm es el video; thumb.jpg y feed.jpg son su portada)
 ```
 
 ## API
 Ver tabla completa en `docs/publica/05_aplicacion_web.md`.
 
 ## Pruebas
-`npm test` ejecuta 25 pruebas: servicios de imágenes, almacenamiento, contraseñas, análisis y un recorrido de la API (registro → subida → galería → detalle → borrado → auditoría) con una base de datos en memoria.
+`npm test` ejecuta 31 pruebas: servicios de imágenes, almacenamiento, contraseñas, análisis y un recorrido de la API (registro → subida → galería → detalle → borrado → auditoría) con una base de datos en memoria.

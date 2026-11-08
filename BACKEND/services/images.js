@@ -36,30 +36,31 @@ async function inspect(buffer) {
 const asJpeg = (pipeline, quality) => pipeline.jpeg({ quality, mozjpeg: true }).toBuffer({ resolveWithObject: true });
 const out = ({ data, info }) => ({ buffer: data, width: info.width, height: info.height, size: info.size });
 
-async function processImage(buffer) {
+async function processImage(buffer, { transforms = true } = {}) {
   const fmt = await inspect(buffer);
 
   // Base: orientada según EXIF y sin transparencia; de aquí salen todas las variantes.
   const { data: base, info } = await open(buffer).rotate().flatten({ background: "#ffffff" }).jpeg({ quality: 92 }).toBuffer({ resolveWithObject: true });
 
-  const [thumb, feed, gray, sepia, up, analysisBuffer] = await Promise.all([
+  const jobs = [
     asJpeg(sharp(base).resize(THUMB_SIZE, THUMB_SIZE, { fit: "cover", position: sharp.strategy.attention }), 78),
     asJpeg(sharp(base).resize({ width: 1080, height: 1350, fit: "inside", withoutEnlargement: true }), 80),
+    sharp(base).resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 80 }).toBuffer(), // para Rekognition (<5 MB)
+  ];
+  if (transforms) jobs.push(
     asJpeg(sharp(base).grayscale(), 85),
     asJpeg(sharp(base).recomb(SEPIA), 85),
     asJpeg(sharp(base).resize({ width: Math.min(info.width * 2, MAX_UPSCALE_WIDTH), kernel: "lanczos3" }).sharpen({ sigma: 0.8 }), 85),
-    sharp(base).resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 80 }).toBuffer(), // para Rekognition (<5 MB)
-  ]);
+  );
+  const [thumb, feed, analysisBuffer, gray, sepia, up] = await Promise.all(jobs);
 
   return {
     original: { ...fmt, width: info.width, height: info.height, size: buffer.length },
     thumb: out(thumb),
     feed: out(feed),
-    transforms: [
-      { type: "GRAYSCALE", ...out(gray) },
-      { type: "SEPIA", ...out(sepia) },
-      { type: "UPSCALE", ...out(up) },
-    ],
+    transforms: transforms
+      ? [{ type: "GRAYSCALE", ...out(gray) }, { type: "SEPIA", ...out(sepia) }, { type: "UPSCALE", ...out(up) }]
+      : [], // los videos solo usan miniatura y portada
     analysisBuffer,
   };
 }
@@ -70,4 +71,10 @@ async function processAvatar(buffer) {
   return open(buffer).rotate().flatten({ background: "#ffffff" }).resize(256, 256, { fit: "cover", position: sharp.strategy.attention }).jpeg({ quality: 82 }).toBuffer();
 }
 
-module.exports = { processImage, processAvatar, inspect, FORMATS };
+/** Banner de perfil: 1500×500 (3:1), como en YouTube. */
+async function processBanner(buffer) {
+  await inspect(buffer);
+  return open(buffer).rotate().flatten({ background: "#ffffff" }).resize(1500, 500, { fit: "cover", position: sharp.strategy.attention }).jpeg({ quality: 82 }).toBuffer();
+}
+
+module.exports = { processImage, processAvatar, processBanner, inspect, FORMATS };

@@ -18,15 +18,29 @@ const sharp = require("sharp");
 
 // ---- Prisma falso (solo lo que usan los controladores probados) ----
 const db = { users: [], pubs: [], audit: [] };
-const pick = (rows, where = {}) => rows.filter((r) => Object.entries(where).every(([k, v]) =>
-  k === "OR" ? v.some((w) => pick([r], w).length) : v && typeof v === "object" && "not" in v ? r[k] !== v.not : r[k] === v));
+const match = (val, cond) => {
+  if (cond && typeof cond === "object") {
+    const low = (x) => String(x ?? "").toLowerCase();
+    return Object.entries(cond).every(([op, v]) => {
+      if (op === "not") return val !== v;
+      if (op === "startsWith") return String(val ?? "").startsWith(v);
+      if (op === "contains") return low(val).includes(low(v));
+      if (op === "equals") return low(val) === low(v);
+      if (op === "in") return v.includes(val);
+      return true; // "mode"
+    });
+  }
+  return val === cond;
+};
+const pick = (rows, where = {}) => rows.filter((r) => Object.entries(where).every(([k, v]) => (k === "OR" ? v.some((w) => pick([r], w).length) : match(r[k], v))));
 const withRel = (p, inc = {}) => ({ ...p, ...(inc.user ? { user: db.users.find((u) => u.id === p.userId) } : {}) });
 const fake = {
   user: {
-    findFirst: async ({ where }) => pick(db.users, where)[0] || null,
-    findUnique: async ({ where }) => pick(db.users, where)[0] || null,
+    // Prisma real devuelve copias (no el mismo objeto): se imita para no falsear los resultados
+    findFirst: async ({ where }) => { const u = pick(db.users, where)[0]; return u ? { ...u } : null; },
+    findUnique: async ({ where }) => { const u = pick(db.users, where)[0]; return u ? { ...u } : null; },
     create: async ({ data }) => { const u = { id: crypto.randomUUID(), role: "user", bio: "", imageKey: null, googleId: null, ...data }; db.users.push(u); return u; },
-    update: async ({ where, data }) => Object.assign(pick(db.users, where)[0], data),
+    update: async ({ where, data }) => ({ ...Object.assign(pick(db.users, where)[0], data) }),
   },
   publication: {
     create: async ({ data, include }) => {
@@ -39,6 +53,7 @@ const fake = {
     findUnique: async ({ where, include }) => { const p = pick(db.pubs, where)[0]; return p ? withRel(p, include) : null; },
     delete: async ({ where }) => { db.pubs = db.pubs.filter((p) => p.id !== where.id); },
   },
+  follow: { count: async () => 0, findUnique: async () => null },
   comment: { findMany: async () => [] },
   reaction: { deleteMany: async () => ({}) },
   repost: { findMany: async () => [], count: async () => 0 },
@@ -169,4 +184,84 @@ test("borrar elimina BD y archivos; otro usuario no puede borrar", async () => {
 test("auditoría registra las acciones", () => {
   const actions = db.audit.map((a) => a.action);
   for (const a of ["user.register", "user.login", "user.login_failed", "photo.upload", "photo.delete"]) assert.ok(actions.includes(a), a);
+});
+
+// ───────────── videos, banner, perfil ─────────────
+const mp4 = () => Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from("ftypisom"), Buffer.alloc(2000, 7)]); // firma MP4 + relleno
+const uploadVideo = (opts = {}) => {
+  const f = new FormData();
+  f.append("text", opts.text ?? "mi video");
+  if (opts.poster !== false) f.append("poster", new Blob([opts.posterBuf], { type: "image/png" }), "poster.png");
+  f.append("file", new Blob([opts.video ?? mp4()], { type: "video/mp4" }), "video.mp4");
+  return call("/api/photos", { method: "POST", body: f });
+};
+let videoPub;
+
+test("subir un video corto con su portada", async () => {
+  const posterBuf = await png();
+  const r = await uploadVideo({ posterBuf });
+  assert.strictEqual(r.status, 201);
+  videoPub = (await r.json()).publication;
+  assert.ok(videoPub.isVideo && videoPub.kind === "video");
+  assert.ok(videoPub.fullUrl.endsWith("/original.mp4") && videoPub.imageUrl.endsWith("/feed.jpg") && videoPub.thumbUrl.endsWith("/thumb.jpg"));
+  const detail = await (await call(`/api/photos/${videoPub.id}`)).json();
+  assert.deepStrictEqual([detail.photo.transforms.length, detail.photo.original.type], [0, "video/mp4"]);
+});
+
+test("rechaza video sin portada o con contenido que no es video", async () => {
+  const posterBuf = await png();
+  assert.strictEqual((await uploadVideo({ poster: false })).status, 400);
+  assert.strictEqual((await uploadVideo({ posterBuf, video: Buffer.from("esto no es un video, solo texto largo ...") })).status, 400);
+});
+
+test("el video se entrega por rangos (206) para poder reproducirlo y adelantarlo", async () => {
+  const full = await call(videoPub.fullUrl);
+  assert.strictEqual(full.status, 200);
+  assert.strictEqual(full.headers.get("accept-ranges"), "bytes");
+  const total = Number(full.headers.get("content-length"));
+  const part = await call(videoPub.fullUrl, { headers: { range: "bytes=0-9" } });
+  assert.strictEqual(part.status, 206);
+  assert.strictEqual(part.headers.get("content-range"), `bytes 0-9/${total}`);
+  assert.strictEqual((await part.arrayBuffer()).byteLength, 10);
+  assert.strictEqual((await call(videoPub.fullUrl, { headers: { range: `bytes=${total + 5}-` } })).status, 416);
+});
+
+test("banner del perfil: se procesa a 1500×500 y se entrega por /media", async () => {
+  const f = new FormData(); f.append("file0", new Blob([await png()], { type: "image/png" }), "banner.png");
+  const r = await call("/api/user/banner", { method: "POST", body: f });
+  assert.strictEqual(r.status, 200);
+  const { user } = await r.json();
+  assert.match(user.bannerUrl, /^\/media\/banners\//);
+  const img = await call(user.bannerUrl);
+  assert.strictEqual(img.status, 200, `GET ${user.bannerUrl}`);
+  const meta = await sharp(Buffer.from(await img.arrayBuffer())).metadata();
+  assert.deepStrictEqual([meta.width, meta.height], [1500, 500]);
+});
+
+test("perfil: cabecera, pestañas (publicaciones, videos, etiquetadas) y errores", async () => {
+  const head = await (await call("/api/profile/ANA_01")).json(); // el nick no distingue mayúsculas
+  assert.ok(head.isMe && head.user.bannerUrl && head.counts.posts >= 1);
+  assert.strictEqual((await call("/api/profile/nadie_existe")).status, 404);
+  assert.strictEqual((await call("/api/profile/ana_01/otra")).status, 400);
+
+  const posts = await (await call("/api/profile/ana_01/posts")).json();
+  assert.ok(posts.items.some((i) => i.publication.kind === "video"));
+  const videos = await (await call("/api/profile/ana_01/videos")).json();
+  assert.ok(videos.items.length >= 1 && videos.items.every((i) => i.publication.isVideo));
+
+  // otra persona la etiqueta (@ana_01) y otra publicación menciona un nick distinto (@ana_011)
+  const mine = cookie;
+  const b = await json("/api/user/login", "POST", { email: "beto@mail.com", password: "ClaveSegura123" });
+  cookie = b.headers.get("set-cookie").split(";")[0];
+  for (const text of ["Hola @ana_01, mira esto", "Hola @ana_011, esto no es para ti"]) {
+    const f = new FormData(); f.append("text", text);
+    assert.strictEqual((await call("/api/photos", { method: "POST", body: f })).status, 201);
+  }
+  cookie = mine;
+  const tagged = await (await call("/api/profile/ana_01/tagged")).json();
+  assert.deepStrictEqual(tagged.items.map((i) => i.publication.text), ["Hola @ana_01, mira esto"]);
+});
+
+test("las respuestas de la API no se guardan en caché", async () => {
+  assert.strictEqual((await call("/api/config")).headers.get("cache-control"), "no-store");
 });

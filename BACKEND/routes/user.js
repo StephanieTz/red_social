@@ -16,5 +16,7 @@ router.get("/list/:page", ensureAuth, U.list);
 router.put("/update", ensureAuth, U.update);
 router.put("/password", ensureAuth, authLimiter, U.changePassword);
 router.post("/upload", ensureAuth, upload.avatar.single("file0"), U.upload);
+router.post("/banner", ensureAuth, upload.banner.single("file0"), U.banner);
+router.delete("/banner", ensureAuth, U.removeBanner);
 
 module.exports = router;

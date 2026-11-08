@@ -9,6 +9,8 @@ Abre la dirección de la aplicación. Verás la página de bienvenida con dos pe
 **Iniciar sesión:** correo, contraseña, reCAPTCHA y *Entrar*.
 **Con Google:** pulsa el botón de Google y elige tu cuenta (no necesitas contraseña ni reCAPTCHA).
 
+Los campos de correo y contraseña **no se autocompletan**. Si tu navegador ofrece guardar la contraseña puedes rechazarlo (ver *Seguridad*).
+
 ## 2. Inicio
 Verás tu perfil a la izquierda, las publicaciones al centro y **A quién seguir** a la derecha.
 - **Publicaciones:** el inicio mezcla publicaciones y reposts. Pulsa **Ver más** para cargar más.
@@ -18,7 +20,7 @@ Verás tu perfil a la izquierda, las publicaciones al centro y **A quién seguir
 
 ## 3. Publicar
 1. Escribe tu texto en el cuadro **¿Qué estás pensando?** (se puede publicar solo texto).
-2. Para añadir una foto pulsa **Foto** y elige una imagen JPG, PNG o WEBP (máximo 10 MB). La aplicación busca rostros y los marca en verde.
+2. Para añadir contenido pulsa **Foto o video**: una imagen JPG, PNG o WEBP (máx. 10 MB; se buscan rostros y se marcan en verde) o un **video corto** MP4 o WEBM (máx. 50 MB y 90 segundos).
 3. Pulsa **Publicar**.
 4. Espera unos segundos: se crean la miniatura y tres versiones (blanco y negro, sepia y ampliada).
 Si la imagen contiene material inapropiado, será rechazada.
@@ -32,7 +34,10 @@ En **tu** publicación pulsa **Eliminar** (y confirma con **¿Seguro?**), o abre
 ## 6. Configuración
 Pulsa **Configuración** (o *Configuración y actividad* en tu perfil). El menú lateral tiene: **Editar perfil** (nombre, nick, presentación y foto), **Guardado**, **Tu actividad** (me gusta, comentarios, reposts y tus publicaciones) y **Contraseña y seguridad**.
 
-## 7. Salir
+## 7. Mi perfil
+Pulsa **Perfil** (o tu nombre) para ver tu perfil: banner, foto, biografía, contadores y las pestañas **Publicaciones**, **Videos**, **Reposts** y **Etiquetadas** (publicaciones donde otras personas escriben `@tu_nick`). Pulsa cualquier cuadro para abrir la publicación. El banner y la biografía se editan en **Configuración > Editar perfil**.
+
+## 8. Salir
 Pulsa **Salir**.
 
 ## Preguntas frecuentes

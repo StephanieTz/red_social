@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { api, uploadAvatar } from "../api";
+import { api, removeBanner, uploadAvatar, uploadBanner } from "../api";
 import { useToast } from "../toast.jsx";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
@@ -25,6 +25,7 @@ function Chips({ options, value, onChange }) {
 function EditProfile({ user, setUser }) {
   const toast = useToast();
   const file = useRef(null);
+  const bannerFile = useRef(null);
   const [f, setF] = useState({ name: user.name, nick: user.nick, bio: user.bio || "" });
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -41,10 +42,29 @@ function EditProfile({ user, setUser }) {
     if (!img) return;
     try { setUser(await uploadAvatar(img)); toast("Foto actualizada"); } catch (ex) { toast(ex.message, true); }
   }
+  async function banner(e) {
+    const img = e.target.files?.[0]; e.target.value = "";
+    if (!img) return;
+    try { setUser(await uploadBanner(img)); toast("Banner actualizado"); } catch (ex) { toast(ex.message, true); }
+  }
+  async function dropBanner() {
+    try { setUser(await removeBanner()); toast("Banner eliminado"); } catch (ex) { toast(ex.message, true); }
+  }
 
   return (
     <>
       <h2>Editar perfil</h2>
+      <section className="box bn">
+        <div className="banner sm" style={user.bannerUrl ? { backgroundImage: `url(${user.bannerUrl})` } : undefined}>{!user.bannerUrl && <span>Sin banner</span>}</div>
+        <div className="bn-actions">
+          <div><b>Banner del perfil</b><p className="sub small">Se muestra arriba de tu perfil (recomendado 1500×500, máx. 5 MB).</p></div>
+          <div className="row">
+            <button className="btn ghost" onClick={() => bannerFile.current.click()}>{user.bannerUrl ? "Cambiar banner" : "Subir banner"}</button>
+            {user.bannerUrl && <button className="btn ghost" onClick={dropBanner}>Quitar</button>}
+          </div>
+        </div>
+        <input ref={bannerFile} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={banner} />
+      </section>
       <section className="box pr">
         <Avatar user={user} size={64} />
         <div><b>{user.nick}</b><p className="sub">{user.name}</p></div>
@@ -54,9 +74,9 @@ function EditProfile({ user, setUser }) {
       <form className="box fields" onSubmit={save}>
         <label>Nombre<input value={f.name} onChange={set("name")} maxLength={50} required /></label>
         <label>Nick de usuario<input value={f.nick} onChange={set("nick")} maxLength={20} pattern="[A-Za-z0-9_.]{3,20}" title="3 a 20 caracteres: letras, números, _ o ." autoCapitalize="none" required /></label>
-        <label>Presentación
-          <textarea value={f.bio} onChange={set("bio")} maxLength={160} placeholder="Cuéntale a la gente quién eres" />
-          <span className="count">{f.bio.length} / 160</span>
+        <label className="bio-box">
+          <span className="bio-head"><span>Biografía</span><span className="count">{f.bio.length} / 160</span></span>
+          <textarea value={f.bio} onChange={set("bio")} maxLength={160} placeholder="Cuéntale a la gente quién eres. Puedes usar @menciones." />
         </label>
         {err && <p className="err-msg" role="alert">{err}</p>}
         <button className="btn" disabled={busy}>Guardar cambios</button>
@@ -149,15 +169,16 @@ export default function SettingsPage({ user, setUser, onLogout, tab }) {
   const current = MENU.some((m) => m[0] === tab) ? tab : "perfil";
   return (
     <>
-      <Topbar onLogout={onLogout} back />
+      <Topbar onLogout={onLogout} me={user} back hideSettings />
       <div className="settings">
         <aside className="side box">
-          <h1>Configuración</h1>
+          <h1><Icon name="gear" /> Configuración</h1>
           <nav>
             {MENU.map(([key, label, icon]) => (
               <a key={key} href={`#/config/${key}`} className={key === current ? "on" : ""}><Icon name={icon} />{label}</a>
             ))}
           </nav>
+          <a className="side-link" href={`#/u/${user.nick}`}>Ver mi perfil →</a>
         </aside>
         <section className="content">
           {current === "perfil" && <EditProfile user={user} setUser={setUser} />}

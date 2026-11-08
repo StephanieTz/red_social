@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
+import Icon from "./Icon.jsx";
 
 /**
  * Cuadrícula de MINIATURAS (400×400). Se pide una página de 24 a la vez, las imágenes se cargan de forma
@@ -35,6 +36,7 @@ export default function Gallery({ scope, version, onOpen }) {
         {items.map((p) => (
           <button key={p.id} className="tile" onClick={() => onOpen(p.id)} aria-label={`Abrir foto de ${p.user?.nick || "usuario"}`}>
             <img src={p.thumbUrl} alt={p.caption || "Foto"} loading="lazy" decoding="async" width="400" height="400" />
+            {p.isVideo && <span className="badge"><Icon name="play" fill /></span>}
             <span className="tile-meta">@{p.user?.nick}{p.faceCount > 0 && ` · ${p.faceCount} 👤`}</span>
           </button>
         ))}

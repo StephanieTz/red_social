@@ -3,9 +3,10 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { api } from "./api";
 import AuthPage from "./components/AuthPage.jsx";
 import FeedPage from "./components/FeedPage.jsx";
+import ProfilePage from "./components/ProfilePage.jsx";
 import SettingsPage from "./components/SettingsPage.jsx";
 
-/** Rutas por hash:  #/  → inicio · #/config/perfil|guardado|actividad|seguridad → configuración */
+/** Rutas por hash:  #/ → inicio · #/u/<nick> → perfil · #/config/perfil|guardado|actividad|seguridad → configuración */
 function useRoute() {
   const read = () => location.hash.replace(/^#\/?/, "").split("/");
   const [route, setRoute] = useState(read);
@@ -38,6 +39,7 @@ export default function App() {
   if (cfg === null || user === undefined) return <div className="center sub">Cargando…</div>;
 
   const view = !user ? <AuthPage cfg={cfg} onAuth={setUser} />
+    : route[0] === "u" && route[1] ? <ProfilePage me={user} onLogout={logout} nick={decodeURIComponent(route[1])} />
     : route[0] === "config" ? <SettingsPage user={user} setUser={setUser} onLogout={logout} tab={route[1]} />
     : <FeedPage user={user} setUser={setUser} onLogout={logout} />;
 

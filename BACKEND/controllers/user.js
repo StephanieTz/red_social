@@ -16,12 +16,7 @@ const err = (res, code, message) => res.status(code).json({ status: "error", mes
 const srv = (res, e) => { console.error(e); return err(res, 500, "Error del servidor"); };
 
 // Datos que se envían al frontend (nunca hash, salt ni correo de otros usuarios)
-const publicUser = (u) => ({
-  _id: u.id, id: u.id, name: u.name, nick: u.nick, bio: u.bio || "", role: u.role,
-  image: u.imageKey || null,
-  imageUrl: u.imageKey ? `/media/${u.imageKey}` : null,
-});
-
+const publicUser = (u) => ({ ...userOut(u), role: u.role });
 const clear = (res) => res.clearCookie("token", { ...cookieOptions, maxAge: undefined });
 const startSession = (res, user) => res.cookie("token", createToken(user), cookieOptions);
 
@@ -222,4 +217,30 @@ const changePassword = async (req, res) => {
   } catch (e) { return srv(res, e); }
 };
 
-module.exports = { register, login, googleLogin, logout, me, profile, list, update, upload, changePassword };
+const banner = async (req, res) => {
+  try {
+    if (!req.file) return err(res, 400, "La petición no incluye imagen");
+    const storage = getStorage();
+    const key = `banners/${req.user.id}/${Date.now()}.jpg`;
+    await storage.put(key, await images.processBanner(req.file.buffer), "image/jpeg");
+    const old = await prisma.user.findUnique({ where: { id: req.user.id }, select: { bannerKey: true } });
+    const u = await prisma.user.update({ where: { id: req.user.id }, data: { bannerKey: key } });
+    if (old?.bannerKey?.startsWith("banners/")) storage.remove([old.bannerKey]).catch(() => {});
+    await audit.log(req, "user.banner", { entity: "user", entityId: u.id });
+    return res.status(200).json({ status: "success", user: publicUser(u) });
+  } catch (e) {
+    if (e.status) return err(res, e.status, e.message);
+    return srv(res, e);
+  }
+};
+
+const removeBanner = async (req, res) => {
+  try {
+    const old = await prisma.user.findUnique({ where: { id: req.user.id }, select: { bannerKey: true } });
+    const u = await prisma.user.update({ where: { id: req.user.id }, data: { bannerKey: null } });
+    if (old?.bannerKey?.startsWith("banners/")) getStorage().remove([old.bannerKey]).catch(() => {});
+    return res.status(200).json({ status: "success", user: publicUser(u) });
+  } catch (e) { return srv(res, e); }
+};
+
+module.exports = { banner, removeBanner, register, login, googleLogin, logout, me, profile, list, update, upload, changePassword };

@@ -17,6 +17,7 @@ const headers = helmet({
       styleSrc: ["'self'", "'unsafe-inline'", G + "style", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "blob:", "https://www.gstatic.com"],
+      mediaSrc: ["'self'", "blob:"],
       connectSrc: ["'self'", G],
       frameSrc: [G, "https://www.google.com/recaptcha/", "https://recaptcha.google.com/recaptcha/"],
       workerSrc: ["'self'", "blob:"],

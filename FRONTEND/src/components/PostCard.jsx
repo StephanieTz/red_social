@@ -4,16 +4,17 @@ import { ago } from "../util";
 import { useToast } from "../toast.jsx";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
+import Mentions from "./Mentions.jsx";
 
 export const ZERO = { likes: 0, dislikes: 0, comments: 0, reposts: 0, mine: 0, saved: false, reposted: false };
 
 function Comment({ c, reply, canDelete, onLike, onReply, onDelete }) {
   return (
     <div className={"c" + (reply ? " rep" : "")}>
-      <Avatar user={c.user} size={reply ? 26 : 32} />
+      <a href={c.user ? `#/u/${c.user.nick}` : undefined}><Avatar user={c.user} size={reply ? 26 : 32} /></a>
       <div className="cb">
-        <b>{c.user?.name || "Usuario eliminado"}</b> <small>@{c.user?.nick || ""} · {ago(c.createdAt)}</small>
-        <p>{reply && c.replyTo && <span className="mn">@{c.replyTo.nick} </span>}{c.text}</p>
+        <a className="nm" href={c.user ? `#/u/${c.user.nick}` : undefined}><b>{c.user?.name || "Usuario eliminado"}</b></a> <small>@{c.user?.nick || ""} · {ago(c.createdAt)}</small>
+        <p>{reply && c.replyTo && <a className="mn" href={`#/u/${c.replyTo.nick}`}>@{c.replyTo.nick} </a>}<Mentions text={c.text} /></p>
         <div className="ca">
           <button className={"link" + (c.liked ? " on" : "")} onClick={() => onLike(c)}>{c.liked ? "Te gusta" : "Me gusta"}{c.likes ? ` · ${c.likes}` : ""}</button>
           <button className="link" onClick={() => onReply(c)}>Responder</button>
@@ -118,12 +119,13 @@ export default function PostCard({ item, me, stats, patch, onDeleted, onRepost, 
     <article className="box post">
       {item.type === "repost" && <small className="rp"><Icon name="rt" /> {item.by?._id === me.id ? "Compartiste" : `${item.by?.name || "Alguien"} compartió`}</small>}
       <div className="ph">
-        <Avatar user={u} size={40} />
-        <div><b>{u.name || "Usuario eliminado"}</b><small>@{u.nick || "anónimo"} · {ago(p.createdAt)}</small></div>
+        <a href={u.nick ? `#/u/${u.nick}` : undefined}><Avatar user={u} size={40} /></a>
+        <div><a className="nm" href={u.nick ? `#/u/${u.nick}` : undefined}><b>{u.name || "Usuario eliminado"}</b></a><small>@{u.nick || "anónimo"} · {ago(p.createdAt)}</small></div>
         {u._id === me.id && <button className="link" onClick={del}>{sure ? "¿Seguro?" : "Eliminar"}</button>}
       </div>
-      {p.text && <p className="txt">{p.text}</p>}
-      {p.hasImage && (
+      {p.text && <p className="txt"><Mentions text={p.text} /></p>}
+      {p.isVideo && <video className="pic vid" controls preload="metadata" playsInline poster={p.imageUrl} src={p.fullUrl} />}
+      {p.hasImage && !p.isVideo && (
         <button className="pic-btn" onClick={() => onOpenPhoto?.(id)} aria-label="Ver foto completa y transformaciones">
           <img className="pic" src={imgSrc} alt="Imagen de la publicación" loading="lazy" onError={() => imgSrc !== p.fullUrl && setImgSrc(p.fullUrl)}
             style={p.width && p.height ? { aspectRatio: `${p.width} / ${p.height}` } : undefined} />
