@@ -1,10 +1,12 @@
 /**
- * Fotos: subida, galería de miniaturas, detalle con transformaciones y borrado.
- * Una "foto" es una fila de `publications` (con thumb_key) + filas en `publication_transforms`
+ * Publicaciones con foto: subida, galería de miniaturas, detalle con transformaciones y borrado.
+ * (También permite publicar solo texto, como en el diseño original.)
+ *
+ * Una publicación con foto = fila de `publications` (con thumb_key) + filas en `publication_transforms`
  * + opcionalmente una fila en `image_analysis`. Los archivos viven en S3 (o disco en desarrollo);
  * la base de datos solo guarda sus claves.
  *
- * Claves de almacenamiento:  photos/{userId}/{photoId}/{original.ext | thumb.jpg | grayscale.jpg | sepia.jpg | upscale.jpg}
+ * Claves:  photos/{userId}/{photoId}/{original.ext | thumb.jpg | feed.jpg | grayscale.jpg | sepia.jpg | upscale.jpg}
  */
 const crypto = require("crypto");
 const validator = require("validator");
@@ -13,20 +15,16 @@ const { getStorage } = require("../services/storage");
 const images = require("../services/images");
 const analysis = require("../services/analysis");
 const audit = require("../services/audit");
+const { url, feedKeyOf, userOut, pubOut } = require("../services/serialize");
 
 const err = (res, code, message) => res.status(code).json({ status: "error", message });
-const url = (key) => (key ? `/media/${key}` : null);
 const AUTHOR = { select: { id: true, name: true, nick: true, imageKey: true } };
 const LABEL = { GRAYSCALE: "Blanco y negro", SEPIA: "Sepia", UPSCALE: "Ampliación 2×" };
 const ORDER = ["GRAYSCALE", "SEPIA", "UPSCALE"];
 
-const author = (u) => u && { id: u.id, name: u.name, nick: u.nick, avatarUrl: url(u.imageKey) };
-const card = (p) => ({
-  id: p.id, caption: p.text, thumbUrl: url(p.thumbKey), width: p.width, height: p.height,
-  createdAt: p.createdAt, faceCount: p.analysis?.faceCount ?? 0, user: author(p.user),
-});
+const card = (p) => ({ ...pubOut(p), caption: p.text, faceCount: p.analysis?.faceCount ?? 0 });
 const detail = (p) => ({
-  id: p.id, caption: p.text, createdAt: p.createdAt, user: author(p.user),
+  id: p.id, caption: p.text, createdAt: p.createdAt, user: userOut(p.user),
   original: { url: url(p.fileKey), width: p.width, height: p.height, sizeBytes: p.sizeBytes, type: p.fileType },
   transforms: [...p.transforms]
     .sort((a, b) => ORDER.indexOf(a.type) - ORDER.indexOf(b.type))
@@ -34,7 +32,7 @@ const detail = (p) => ({
   analysis: p.analysis && { provider: p.analysis.provider, faceCount: p.analysis.faceCount, faces: p.analysis.faces, labels: p.analysis.labels },
 });
 
-// GET /api/photos?page=1&limit=24&mine=1&user=<uuid>
+// GET /api/photos?page=1&limit=24&mine=1&user=<uuid>   → miniaturas
 const list = async (req, res, next) => {
   try {
     const page = Math.max(parseInt(req.query.page) || 1, 1);
@@ -53,7 +51,7 @@ const list = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-// GET /api/photos/:id
+// GET /api/photos/:id   → original + transformaciones + análisis
 const get = async (req, res, next) => {
   try {
     if (!validator.isUUID(req.params.id)) return err(res, 400, "ID inválido");
@@ -63,15 +61,22 @@ const get = async (req, res, next) => {
   } catch (e) { next(e); }
 };
 
-// POST /api/photos   (multipart: file, text?, faces?)
+// POST /api/photos   (multipart: text?, file?, faces?)  — con foto o solo texto
 const create = async (req, res, next) => {
   const stored = [];
   try {
-    if (!req.file) return err(res, 400, 'Debes adjuntar una imagen (campo "file")');
     const caption = typeof req.body.text === "string" ? req.body.text.trim() : "";
     if (caption.length > 500) return err(res, 400, "El texto admite máximo 500 caracteres");
 
-    const img = await images.processImage(req.file.buffer);                        // miniatura + 3 transformaciones
+    // Publicación solo de texto
+    if (!req.file) {
+      if (!caption) return err(res, 400, "Escribe un texto o adjunta una foto");
+      const post = await prisma.publication.create({ data: { userId: req.user.id, text: caption }, include: { user: AUTHOR } });
+      await audit.log(req, "post.create", { entity: "photo", entityId: post.id });
+      return res.status(201).json({ status: "success", message: "Publicado", publication: pubOut(post) });
+    }
+
+    const img = await images.processImage(req.file.buffer);                        // miniatura + feed + 3 transformaciones
     const ai = await analysis.analyze(img.analysisBuffer, analysis.sanitizeFaces(req.body.faces));
     if (ai.flagged) {
       await audit.log(req, "photo.rejected", { entity: "photo", metadata: { reason: "moderation" } });
@@ -83,6 +88,7 @@ const create = async (req, res, next) => {
     const files = [
       { key: `${base}/original.${img.original.ext}`, buffer: req.file.buffer, type: img.original.mime },
       { key: `${base}/thumb.jpg`, buffer: img.thumb.buffer, type: "image/jpeg" },
+      { key: `${base}/feed.jpg`, buffer: img.feed.buffer, type: "image/jpeg" },
       ...img.transforms.map((t) => ({ key: `${base}/${t.type.toLowerCase()}.jpg`, buffer: t.buffer, type: "image/jpeg", t })),
     ];
 
@@ -102,7 +108,7 @@ const create = async (req, res, next) => {
     });
 
     await audit.log(req, "photo.upload", { entity: "photo", entityId: id, metadata: { bytes: img.original.size, faces: pub.analysis?.faceCount ?? null } });
-    res.status(201).json({ status: "success", message: "Foto publicada", photo: detail(pub) });
+    res.status(201).json({ status: "success", message: "Foto publicada", publication: pubOut(pub), photo: detail(pub) });
   } catch (e) {
     if (stored.length) await getStorage().remove(stored).catch(() => {}); // sin archivos huérfanos
     if (e.status) return err(res, e.status, e.message);
@@ -110,18 +116,22 @@ const create = async (req, res, next) => {
   }
 };
 
-// DELETE /api/photos/:id   (dueño o administrador)
+// DELETE /api/photos/:id   (dueño o administrador) — sirve para publicaciones con o sin foto
 const remove = async (req, res, next) => {
   try {
     if (!validator.isUUID(req.params.id)) return err(res, 400, "ID inválido");
     const p = await prisma.publication.findUnique({ where: { id: req.params.id }, include: { transforms: true } });
-    if (!p) return err(res, 404, "Foto no encontrada");
+    if (!p) return err(res, 404, "Publicación no encontrada");
     if (p.userId !== req.user.id && req.user.role !== "admin") return err(res, 403, "No tienes permiso");
 
-    await prisma.publication.delete({ where: { id: p.id } }); // comentarios, reacciones y transformaciones caen en cascada
-    await getStorage().remove([p.fileKey, p.thumbKey, ...p.transforms.map((t) => t.s3Key)]).catch((e) => console.error("Borrado en storage:", e.message));
+    // reactions no tiene clave foránea (apunta a posts o comentarios): se limpian aquí
+    const comments = await prisma.comment.findMany({ where: { publicationId: p.id }, select: { id: true } });
+    await prisma.reaction.deleteMany({ where: { targetId: { in: [p.id, ...comments.map((c) => c.id)] } } });
+    await prisma.publication.delete({ where: { id: p.id } }); // comentarios, reposts, guardados y transformaciones caen en cascada
+
+    await getStorage().remove([p.fileKey, p.thumbKey, feedKeyOf(p.fileKey), ...p.transforms.map((t) => t.s3Key)]).catch((e) => console.error("Borrado en storage:", e.message));
     await audit.log(req, "photo.delete", { entity: "photo", entityId: p.id });
-    res.json({ status: "success", message: "Foto eliminada" });
+    res.json({ status: "success", message: "Publicación eliminada" });
   } catch (e) { next(e); }
 };
 

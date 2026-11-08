@@ -25,7 +25,7 @@ Node.js 22+ · npm 10+ · PostgreSQL (o cuenta Neon) · Docker (despliegue) · A
 | `npm run build:front` | Compila React en `FRONTEND/dist` |
 | `npm start` / `npm run dev` | Servidor / servidor con recarga |
 | `npm run dev:front` | React con recarga en :5173 (proxy a :4000) |
-| `npm test` | 22 pruebas automáticas |
+| `npm test` | 25 pruebas automáticas |
 | `node scripts/make-admin.js <correo>` | Convierte un usuario en administrador |
 
 ## Estructura del backend

@@ -23,9 +23,9 @@ git push -u origin feature/<tu-nombre>-<tema>    # y abre un Pull Request hacia 
 ## Pendientes sugeridos (para repartir)
 | Tarea | Notas |
 |---|---|
-| Comentarios, reacciones y guardados en la interfaz | El backend ya existe: `/api/social/*` (comentar, like, guardar, repostear, buscar) |
-| Seguir / dejar de seguir y perfiles públicos | Backend listo: `/api/follow/*`, `/api/user/profile/:id` |
+| Notificaciones (likes, comentarios, seguidores nuevos) | Crear tabla `notifications` en `prisma/schema.prisma` + `npx prisma migrate dev`; mostrarlas en la barra superior |
+| Perfil público de otros usuarios (`#/u/<nick>`) | Backend listo: `GET /api/user/profile/:id`, `GET /api/photos?user=<id>`, `/api/follow/*` |
 | Recuperación de contraseña | La tabla `password_resets` ya existe; falta el envío de correo (Amazon SES) |
-| Mover las transformaciones a AWS Lambda (opcional) | Disparar con evento S3 `ObjectCreated` y reutilizar `images.js` |
+| Mover las transformaciones a AWS Lambda (opcional) | Disparar con evento S3 `ObjectCreated` y reutilizar `BACKEND/services/images.js` |
 | Capturas, diagramas PNG y datos del grupo en `docs/` | Ver `docs/README.md` |
-| Probar todo en la EC2 real | Checklist en `docs/entregables/instrucciones_despliegue.md` |
+| Probar todo en la EC2 real | Lista de verificación en `docs/entregables/instrucciones_despliegue.md` |

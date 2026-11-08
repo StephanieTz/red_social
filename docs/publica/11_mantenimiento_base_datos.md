@@ -7,6 +7,7 @@
 | Semanal | Revisar intentos de login fallidos y errores | Consulta del manual 3 · `docker compose logs app` |
 | Mensual | Eliminar tokens de reset vencidos | `DELETE FROM password_resets WHERE expires_at < now() - interval '7 days';` |
 | Mensual | Archivar auditoría > 12 meses | Exportar con `\copy` a S3 y luego `DELETE FROM audit_logs WHERE created_at < now() - interval '12 months';` |
+| Mensual | Eliminar reacciones huérfanas (la tabla no tiene FK) | `DELETE FROM reactions r WHERE (r.kind='POST' AND NOT EXISTS (SELECT 1 FROM publications p WHERE p.id=r.target_id)) OR (r.kind='COMMENT' AND NOT EXISTS (SELECT 1 FROM comments c WHERE c.id=r.target_id));` |
 | Mensual | Revisar crecimiento y lentitud | `SELECT relname, n_live_tup FROM pg_stat_user_tables ORDER BY 2 DESC;` |
 | Trimestral | `VACUUM (ANALYZE)` si el proveedor no lo hace solo | Consola SQL |
 | Por cambio | Migraciones | Siempre con `prisma migrate deploy`; nunca editar tablas a mano |

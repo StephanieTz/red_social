@@ -25,6 +25,7 @@ app.use("/api", apiLimiter, sameOrigin);
 app.use("/api/config", require("./BACKEND/routes/config"));
 app.use("/api/user", require("./BACKEND/routes/user"));
 app.use("/api/photos", require("./BACKEND/routes/photos"));
+app.use("/api/publications", require("./BACKEND/routes/publications"));
 app.use("/api/follow", require("./BACKEND/routes/follow"));
 app.use("/api/social", require("./BACKEND/routes/social"));
 app.use("/api/audit", require("./BACKEND/routes/audit"));

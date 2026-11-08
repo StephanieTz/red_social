@@ -2,11 +2,25 @@ import { useEffect, useState } from "react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { api } from "./api";
 import AuthPage from "./components/AuthPage.jsx";
-import Home from "./components/Home.jsx";
+import FeedPage from "./components/FeedPage.jsx";
+import SettingsPage from "./components/SettingsPage.jsx";
+
+/** Rutas por hash:  #/  → inicio · #/config/perfil|guardado|actividad|seguridad → configuración */
+function useRoute() {
+  const read = () => location.hash.replace(/^#\/?/, "").split("/");
+  const [route, setRoute] = useState(read);
+  useEffect(() => {
+    const on = () => { setRoute(read()); window.scrollTo(0, 0); };
+    window.addEventListener("hashchange", on);
+    return () => window.removeEventListener("hashchange", on);
+  }, []);
+  return route;
+}
 
 export default function App() {
-  const [cfg, setCfg] = useState(null);      // claves públicas (reCAPTCHA / Google)
+  const [cfg, setCfg] = useState(null);        // claves públicas (reCAPTCHA / Google)
   const [user, setUser] = useState(undefined); // undefined = comprobando sesión · null = sin sesión
+  const route = useRoute();
 
   useEffect(() => {
     (async () => {
@@ -15,11 +29,17 @@ export default function App() {
     })();
   }, []);
 
-  if (cfg === null || user === undefined) return <div className="center muted">Cargando…</div>;
+  const logout = async () => {
+    try { await api("/user/logout", { method: "POST" }); } catch { /* ya sin sesión */ }
+    location.hash = "#/";
+    setUser(null);
+  };
 
-  const view = user
-    ? <Home user={user} setUser={setUser} onLogout={async () => { try { await api("/user/logout", { method: "POST" }); } catch { /* ya sin sesión */ } setUser(null); }} />
-    : <AuthPage cfg={cfg} onAuth={setUser} />;
+  if (cfg === null || user === undefined) return <div className="center sub">Cargando…</div>;
+
+  const view = !user ? <AuthPage cfg={cfg} onAuth={setUser} />
+    : route[0] === "config" ? <SettingsPage user={user} setUser={setUser} onLogout={logout} tab={route[1]} />
+    : <FeedPage user={user} setUser={setUser} onLogout={logout} />;
 
   return cfg.googleClientId ? <GoogleOAuthProvider clientId={cfg.googleClientId}>{view}</GoogleOAuthProvider> : view;
 }

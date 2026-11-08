@@ -8,6 +8,7 @@ const google = require("../services/google");
 const audit = require("../services/audit");
 const images = require("../services/images");
 const { getStorage } = require("../services/storage");
+const { userOut } = require("../services/serialize");
 
 const str = (v) => (typeof v === "string" ? v.trim() : "");
 const NICK = /^[A-Za-z0-9_.]{3,20}$/;
@@ -136,7 +137,7 @@ const profile = async (req, res) => {
     if (!validator.isUUID(req.params.id)) return err(res, 400, "ID inválido");
     const u = await prisma.user.findUnique({ where: { id: req.params.id }, select: { id: true, name: true, nick: true, imageKey: true, bio: true, createdAt: true } });
     if (!u) return err(res, 404, "Usuario no encontrado");
-    return res.status(200).json({ status: "success", user: { ...u, _id: u.id, image: u.imageKey, imageUrl: u.imageKey ? `/media/${u.imageKey}` : null } });
+    return res.status(200).json({ status: "success", user: { ...userOut(u), createdAt: u.createdAt } });
   } catch (e) { return srv(res, e); }
 };
 
@@ -151,7 +152,7 @@ const list = async (req, res) => {
     if (!users.length) return err(res, 404, "No hay usuarios");
     return res.status(200).json({
       status: "success",
-      users: users.map((u) => ({ ...u, _id: u.id, image: u.imageKey, imageUrl: u.imageKey ? `/media/${u.imageKey}` : null })),
+      users: users.map(userOut),
       totalDocs, totalPages: Math.ceil(totalDocs / limit), currentPage: page,
     });
   } catch (e) { return srv(res, e); }

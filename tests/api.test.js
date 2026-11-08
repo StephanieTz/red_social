@@ -31,14 +31,17 @@ const fake = {
   publication: {
     create: async ({ data, include }) => {
       const { transforms, analysis, ...rest } = data;
-      const p = { ...rest, createdAt: new Date(), transforms: transforms.create.map((t) => ({ ...t })), analysis: analysis ? { ...analysis.create } : null };
+      const p = { id: crypto.randomUUID(), ...rest, createdAt: new Date(), transforms: (transforms?.create || []).map((t) => ({ ...t })), analysis: analysis ? { ...analysis.create } : null };
       db.pubs.push(p); return withRel(p, include);
     },
-    findMany: async ({ where, skip = 0, take = 24, include }) => pick(db.pubs, where).slice(skip, skip + take).map((p) => withRel(p, include)),
-    count: async ({ where }) => pick(db.pubs, where).length,
+    findMany: async ({ where, skip = 0, take = 24, include } = {}) => pick(db.pubs, where).slice(skip, skip + take).map((p) => withRel(p, include)),
+    count: async ({ where } = {}) => pick(db.pubs, where).length,
     findUnique: async ({ where, include }) => { const p = pick(db.pubs, where)[0]; return p ? withRel(p, include) : null; },
     delete: async ({ where }) => { db.pubs = db.pubs.filter((p) => p.id !== where.id); },
   },
+  comment: { findMany: async () => [] },
+  reaction: { deleteMany: async () => ({}) },
+  repost: { findMany: async () => [], count: async () => 0 },
   auditLog: { create: async ({ data }) => { db.audit.push(data); } },
 };
 const prismaPath = require.resolve("../BACKEND/database/prisma");
@@ -101,6 +104,25 @@ test("subir foto: miniatura + 3 transformaciones + análisis de rostros", async 
   assert.strictEqual(photo.transforms[2].width, 1800);
   assert.deepStrictEqual([photo.analysis.provider, photo.analysis.faceCount], ["FACEAPI", 1]);
   assert.strictEqual(photo.original.width, 900);
+});
+
+test("la publicación expone miniatura, versión de feed y original", async () => {
+  const pub = (await (await call("/api/publications/feed/1")).json()).items[0].publication;
+  assert.ok(pub.hasImage && pub.thumbUrl.endsWith("/thumb.jpg") && pub.imageUrl.endsWith("/feed.jpg") && /original\.png$/.test(pub.fullUrl));
+  assert.strictEqual((await call(pub.imageUrl)).status, 200);
+});
+
+test("publicar solo texto (sin foto) y rechazar publicación vacía", async () => {
+  const f = new FormData(); f.append("text", "Hola red social");
+  const r = await call("/api/photos", { method: "POST", body: f });
+  assert.strictEqual(r.status, 201);
+  const { publication } = await r.json();
+  assert.strictEqual(publication.hasImage, false);
+  assert.strictEqual((await call("/api/photos", { method: "POST", body: new FormData() })).status, 400);
+  const feed = await (await call("/api/publications/feed/1")).json();
+  assert.strictEqual(feed.items.length, 2);
+  assert.ok(feed.items.every((i) => i.type === "post" && i.publication.user.nick === "ana_01"));
+  assert.strictEqual((await call(`/api/photos/${publication.id}`, { method: "DELETE" })).status, 200); // texto: se borra sin tocar S3
 });
 
 test("galería devuelve miniaturas y /media las entrega (con caché inmutable)", async () => {

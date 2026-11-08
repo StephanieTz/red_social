@@ -38,3 +38,10 @@ test("avatar 256×256", async () => {
   const m = await sharp(await processAvatar(await sample())).metadata();
   assert.deepStrictEqual([m.width, m.height], [256, 256]);
 });
+
+test("versión de visualización (feed): máx. 1080 px de ancho, sin ampliar imágenes pequeñas", async () => {
+  const big = await processImage(await sample());
+  assert.deepStrictEqual([big.feed.width, big.feed.height], [1080, 720]);
+  const small = await processImage(await sharp({ create: { width: 300, height: 200, channels: 3, background: "#fff" } }).png().toBuffer());
+  assert.strictEqual(small.feed.width, 300);
+});

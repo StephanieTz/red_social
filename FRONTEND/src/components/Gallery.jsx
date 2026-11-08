@@ -26,7 +26,7 @@ export default function Gallery({ scope, version, onOpen }) {
   useEffect(() => { load(1, true); }, [load, version]);
 
   if (!loading && !err && !items.length)
-    return <div className="empty"><h3>{scope === "mine" ? "Aún no has subido fotos" : "Todavía no hay fotos"}</h3><p>Pulsa “Subir foto” para publicar la primera.</p></div>;
+    return <div className="box empty">{scope === "mine" ? "Aún no has subido fotos." : "Todavía no hay fotos."}<br />Usa el botón “Foto” al crear una publicación.</div>;
 
   return (
     <>
@@ -39,7 +39,7 @@ export default function Gallery({ scope, version, onOpen }) {
           </button>
         ))}
       </div>
-      {loading && <p className="muted center-text">Cargando…</p>}
+      {loading && <p className="sub center-text">Cargando…</p>}
       {!loading && page < pages && <div className="center-text"><button className="btn ghost" onClick={() => load(page + 1, false)}>Ver más</button></div>}
     </>
   );

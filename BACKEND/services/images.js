@@ -3,6 +3,7 @@
  *
  * Por cada foto subida se generan automáticamente:
  *   - THUMB       miniatura 400×400 (recorte inteligente) para la cuadrícula de inicio
+ *   - FEED        versión de visualización (máx. 1080 px) para las publicaciones; evita descargar el original en el inicio
  *   - GRAYSCALE   blanco y negro
  *   - SEPIA       sepia
  *   - UPSCALE     ampliación 2× (máx. 4000 px de ancho) con interpolación Lanczos
@@ -41,8 +42,9 @@ async function processImage(buffer) {
   // Base: orientada según EXIF y sin transparencia; de aquí salen todas las variantes.
   const { data: base, info } = await open(buffer).rotate().flatten({ background: "#ffffff" }).jpeg({ quality: 92 }).toBuffer({ resolveWithObject: true });
 
-  const [thumb, gray, sepia, up, analysisBuffer] = await Promise.all([
+  const [thumb, feed, gray, sepia, up, analysisBuffer] = await Promise.all([
     asJpeg(sharp(base).resize(THUMB_SIZE, THUMB_SIZE, { fit: "cover", position: sharp.strategy.attention }), 78),
+    asJpeg(sharp(base).resize({ width: 1080, height: 1350, fit: "inside", withoutEnlargement: true }), 80),
     asJpeg(sharp(base).grayscale(), 85),
     asJpeg(sharp(base).recomb(SEPIA), 85),
     asJpeg(sharp(base).resize({ width: Math.min(info.width * 2, MAX_UPSCALE_WIDTH), kernel: "lanczos3" }).sharpen({ sigma: 0.8 }), 85),
@@ -52,6 +54,7 @@ async function processImage(buffer) {
   return {
     original: { ...fmt, width: info.width, height: info.height, size: buffer.length },
     thumb: out(thumb),
+    feed: out(feed),
     transforms: [
       { type: "GRAYSCALE", ...out(gray) },
       { type: "SEPIA", ...out(sepia) },

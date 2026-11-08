@@ -69,6 +69,8 @@ erDiagram
 | `follows`, `comments`, `reactions`, `reposts`, `saves` | Funciones sociales (backend listo) | únicos y compuestos según el esquema |
 | `password_resets` | Tokens (solo hash) de recuperación | `token_hash` único |
 
+**`reactions` no tiene claves foráneas a propósito:** `target_id` apunta a una publicación o a un comentario (según `kind`). Dos claves foráneas sobre la misma columna exigirían que el id existiera en ambas tablas, lo que hacía imposible guardar un me gusta (corregido en la migración `20261107000000_fix_reactions_fk`). El código borra las reacciones al eliminar una publicación o comentario.
+
 **Las imágenes no están en la BD**: solo `file_key`, `thumb_key` y `s3_key` apuntan a objetos de S3. Al borrar una publicación, sus transformaciones, análisis, comentarios y reacciones se eliminan en cascada.
 
 ## Estructura de claves en S3
@@ -85,4 +87,4 @@ avatars/{userId}/{timestamp}.jpg
 Ver tabla completa en `docs/publica/05_aplicacion_web.md`.
 
 ## Pruebas
-`npm test` ejecuta 22 pruebas: servicios de imágenes, almacenamiento, contraseñas, análisis y un recorrido de la API (registro → subida → galería → detalle → borrado → auditoría) con una base de datos en memoria.
+`npm test` ejecuta 25 pruebas: servicios de imágenes, almacenamiento, contraseñas, análisis y un recorrido de la API (registro → subida → galería → detalle → borrado → auditoría) con una base de datos en memoria.

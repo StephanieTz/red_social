@@ -22,12 +22,12 @@ export default function PhotoModal({ id, me, onClose, onDeleted }) {
   return (
     <Modal title="Foto" onClose={onClose} wide>
       {err && <p className="err-msg">{err}</p>}
-      {!photo && !err && <p className="muted">Cargando…</p>}
+      {!photo && !err && <p className="sub">Cargando…</p>}
       {photo && shown && (
         <div className="detail">
           <div className="stage"><img src={shown.url} alt={photo.caption || "Foto"} /></div>
           <aside>
-            <div className="author"><Avatar user={photo.user} size={40} /><div><b>{photo.user?.name}</b><br /><span className="muted small">@{photo.user?.nick} · {fmtDate(photo.createdAt)}</span></div></div>
+            <div className="author"><Avatar user={photo.user} size={40} /><div><b>{photo.user?.name}</b><br /><span className="sub small">@{photo.user?.nick} · {fmtDate(photo.createdAt)}</span></div></div>
             {photo.caption && <p>{photo.caption}</p>}
 
             <h4>Versiones</h4>
@@ -38,12 +38,12 @@ export default function PhotoModal({ id, me, onClose, onDeleted }) {
                 </button>
               ))}
             </div>
-            <p className="muted small">{shown.label}: {shown.width}×{shown.height}px · {fmtBytes(shown.sizeBytes)}</p>
+            <p className="sub small">{shown.label}: {shown.width}×{shown.height}px · {fmtBytes(shown.sizeBytes)}</p>
             <a className="btn ghost" href={shown.url} download>⬇ Descargar esta versión</a>
 
             {photo.analysis && <>
               <h4>Análisis</h4>
-              <p className="small">👤 Rostros detectados: <b>{photo.analysis.faceCount}</b> <span className="muted">({photo.analysis.provider === "REKOGNITION" ? "Amazon Rekognition" : "face-api.js"})</span></p>
+              <p className="small">👤 Rostros detectados: <b>{photo.analysis.faceCount}</b> <span className="sub">({photo.analysis.provider === "REKOGNITION" ? "Amazon Rekognition" : "face-api.js"})</span></p>
               {photo.analysis.labels?.length > 0 && <p className="chips">{photo.analysis.labels.map((l) => <span key={l.name}>{l.name}</span>)}</p>}
             </>}
 

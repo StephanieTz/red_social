@@ -13,6 +13,7 @@ Aplicación web social tipo Instagram para almacenar y navegar fotografías.
 | 5 | Ver foto completa + transformaciones | `PhotoModal.jsx`, `GET /api/photos/:id` |
 | 6 | Almacenamiento en la nube (S3) y arquitectura cloud | `BACKEND/services/storage.js`, `infra/` |
 | 7 | Amazon Rekognition (opcional) | `BACKEND/services/analysis.js` (`REKOGNITION_ENABLED=true`) |
+| + | Diseño original: inicio con perfil, publicaciones y «A quién seguir»; likes/dislikes, comentarios con respuestas, reposts, guardados, seguir y buscar; configuración con menú lateral | `FRONTEND/src/components/{FeedPage,PostCard,SettingsPage}.jsx`, `BACKEND/controllers/{social,follow,publications}.js` |
 | + | Imágenes solo en S3, BD guarda rutas | `publications.file_key / thumb_key`, `publication_transforms.s3_key` |
 | + | Contraseñas con hash + sal única | `BACKEND/services/password.js` |
 | + | EC2, Route 53, auditoría, documentación | `infra/`, `audit_logs`, `docs/` |
@@ -26,7 +27,7 @@ Aplicación web social tipo Instagram para almacenar y navegar fotografías.
 | `infra/` | Scripts y políticas AWS (EC2, S3, IAM, Route 53) **sin claves** | ✅ |
 | `docs/publica/` | Los manuales técnicos (arquitectura, seguridad, DRP, …) | ✅ |
 | `docs/entregables/` | Documentación del desarrollador, despliegue, usuario e integrantes | ✅ |
-| `tests/` | 22 pruebas automáticas (`npm test`) | ✅ |
+| `tests/` | 25 pruebas automáticas (`npm test`) | ✅ |
 | `privado/` | Credenciales del docente, llave `.pem`, `.env` real | ❌ **nunca** |
 
 ## Arranque local (sin AWS)
@@ -41,7 +42,7 @@ Desarrollo con recarga en vivo: `npm run dev` (API, puerto 4000) y `npm run dev:
 Para reCAPTCHA en local usa las claves de prueba que aparecen en `.env.example`.
 
 ## Pruebas
-`npm test` → 22 pruebas (procesamiento de imágenes, almacenamiento, contraseñas y un recorrido completo de la API con BD simulada; no necesitan PostgreSQL ni AWS).
+`npm test` → 25 pruebas (procesamiento de imágenes, almacenamiento, contraseñas y un recorrido completo de la API con BD simulada; no necesitan PostgreSQL ni AWS).
 
 ## Despliegue
 Ver **`docs/entregables/instrucciones_despliegue.md`**. Resumen: `bash infra/ec2/deploy.sh` en la EC2.

@@ -83,7 +83,6 @@ model Publication {
   transforms   PublicationTransform[]
   analysis     ImageAnalysis?
   comments     Comment[]
-  reactions    Reaction[]
   reposts      Repost[]
   saves        Save[]
 
@@ -164,7 +163,6 @@ model Comment {
   publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
   parent      Comment?    @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies     Comment[]   @relation("CommentReplies")
-  reactions   Reaction[]  @relation("CommentReactions")
 
   @@index([publicationId, createdAt])
   @@index([parentId])
@@ -189,8 +187,8 @@ model Reaction {
   createdAt  DateTime     @default(now()) @map("created_at")
 
   user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  publication Publication? @relation(fields: [targetId], references: [id], onDelete: Cascade, map: "reaction_publication_fk")
-  comment    Comment?      @relation("CommentReactions", fields: [targetId], references: [id], onDelete: Cascade, map: "reaction_comment_fk")
+  // targetId apunta a una publicación O a un comentario (según "kind"), por eso NO lleva clave foránea:
+  // una FK a ambas tablas exigiría que el id existiera en las dos. El borrado se hace desde el código.
 
   @@unique([userId, kind, targetId])
   @@index([targetId, kind])
