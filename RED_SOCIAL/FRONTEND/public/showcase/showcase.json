@@ -1,0 +1,4 @@
+{
+  "_ayuda": "Agrega aquí los videos o fotos de creadores. Cada elemento: type ('video' o 'image'), src (ruta del archivo dentro de esta carpeta), poster (opcional, imagen de portada del video) y name (opcional, @usuario). Mientras 'items' esté vacío se muestran tarjetas de ejemplo.",
+  "items": []
+}

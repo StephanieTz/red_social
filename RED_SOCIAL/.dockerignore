@@ -1,0 +1,12 @@
+node_modules
+FRONTEND/node_modules
+FRONTEND/dist
+.env
+.env.*
+.git
+storage
+uploads
+privado
+docs
+tests
+*.md
